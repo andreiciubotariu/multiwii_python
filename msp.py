@@ -40,7 +40,6 @@ class MSP:
 		return self.serial.read(num_bytes)
 		
 
-
 print(MSP_CMD_IDENTITY.sizeof())
 
 serial_port = "/dev/ttyUSB0"
@@ -50,6 +49,7 @@ msp.send_cmd(0,0)
 
 while True:
 	read_bytes = msp.read(MSP_CMD_IDENTITY.sizeof())
-	print(MSP_CMD_IDENTITY.parse(read_bytes));
+	print(MSP_CMD_IDENTITY.parse(read_bytes))
+	print(MSP_CMD_IDENTITY.parse(read_bytes).preamble)
 
 
