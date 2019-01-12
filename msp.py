@@ -1,5 +1,5 @@
 from serial import Serial
-from construct import Struct, Const, Int8ul, Int32ul
+from construct import Struct, Const, Int8ul, Int16ul, Int32ul
 import struct
 import time
 
@@ -17,19 +17,35 @@ MSP_DIR_TO_BOARD = b'<'
 MSP_DATASIZE_INDEX = len(MSP_PREAMBLE + MSP_DIR_TO_BOARD)
 
 MSP_PARAMETERIZED_REQUESTS = {
-		
+	MSP_GET_WP : Struct('preamble' / Const(MSP_PREAMBLE),
+					    'direction' / Const(MSP_DIR_TO_BOARD),
+						'size' / Const(1, Int8ul),
+						'message_id' / Const(MSP_GET_WP, Int8ul),
+						'wp_no' / Int8ul),
 }
 
 MSP_RECEIVE_CONSTRUCTS = {
 	MSP_IDENT : Struct('preamble' / Const(MSP_PREAMBLE),
 						  'direction' / Const(MSP_DIR_FROM_BOARD),
 						  'size' / Int8ul,
-						  'message_id' / Const(100, Int8ul),
+						  'message_id' / Const(MSP_IDENT, Int8ul),
 						  'version' / Int8ul,
 						  'multitype' / Int8ul,
 						  'msp_version' / Int8ul,
 						  'capability' / Int32ul,
-						  'crc' / Int8ul)
+						  'crc' / Int8ul),
+
+	MSP_GET_WP : Struct('preamble' / Const(MSP_PREAMBLE),
+					    'direction' / Const(MSP_DIR_FROM_BOARD),
+						'size' / Int8ul,
+						'message_id' / Const(MSP_GET_WP, Int8ul),
+						'wp_no' / Int8ul,
+						'lat' / Int32ul,
+						'lon' / Int32ul,
+						'altitude_hold' / Int32ul,
+						'heading' / Int16ul,
+						'time_to_stay' / Int16ul,
+						'crc' / Int8ul),
 }
 
 class MSP:
@@ -78,7 +94,12 @@ class MSP:
 
 		received_data = self.read(parser.sizeof())
 		crc = self.calc_crc(received_data[MSP_DATASIZE_INDEX:-1])
-		parsed_data = parser.parse(received_data)
+		try:
+			parsed_data = parser.parse(received_data)
+		except:
+			print("received_data: ", received_data)
+			raise
+
 		if (crc != parsed_data.crc):
 			raise ValueError("CRC does not match. Expected {0} but got {1}".format(crc, parsed_data.crc))
 
@@ -93,4 +114,5 @@ serial_port = "/dev/ttyUSB0"
 msp = MSP(serial_port)
 print(msp.request_info(MSP_IDENT))
 
+print(msp.request_info(MSP_GET_WP, {'wp_no': 0}))
 
