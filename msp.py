@@ -14,7 +14,7 @@ MSP_GET_WP = 118
 MSP_PREAMBLE = b'$M'
 MSP_DIR_FROM_BOARD = b'>'
 MSP_DIR_TO_BOARD = b'<'
-
+MSP_DATASIZE_INDEX = len(MSP_PREAMBLE + MSP_DIR_TO_BOARD)
 
 MSP_PARAMETERIZED_REQUESTS = {
 		
@@ -42,25 +42,37 @@ class MSP:
 		time.sleep(serial_delay)
 		print('Done')
 
+
+	def calc_crc(self, data):
+		crc = 0
+		for a_byte in data:
+			crc ^= a_byte
+		return crc
+
 	def send_data(self, message_id, data):
 		# TODO send data
 		# TODO wait for ack back
 		pass
 
-	def send_construct(self, cmd, data):
-		self.serial.write(cmd.build(data))
+	def send_construct(self, cmd, parameters):
+		data = cmd.build(parameters)
+		crc = self.calc_crc(data[MSP_DATASIZE_INDEX::])
+		print("CRC", crc)
+		data += crc.to_bytes(1, byteorder='little')
+		print(data)
+		print(len(data))
+		self.serial.write(data)
 
 	def request_info(self, message_id, parameters={}):
 		# By default return a struct that does not have any parameters. Since there is no data to transmit
 		# The crc is simply the message_id
 		# TODO actually calculate the CRC for all Structs. The parameterized requests need a CRC calculation
 		request = MSP_PARAMETERIZED_REQUESTS.get(message_id, 
-												Struct('preamble' / Const(MSP_PREAMBLE),
-													   'direction' / Const(MSP_DIR_TO_BOARD),
-													   'size' / Const(0, Int8ul),
-													   'message_id' / Const(message_id, Int8ul),
-													   'crc' / Const(message_id, Int8ul)))
-		self.send_construct(request, parameters);
+												 Struct('preamble' / Const(MSP_PREAMBLE),
+												 	    'direction' / Const(MSP_DIR_TO_BOARD),
+													    'size' / Const(0, Int8ul),
+													    'message_id' / Const(message_id, Int8ul)))
+		self.send_construct(request, parameters)
 
 		parser = MSP_RECEIVE_CONSTRUCTS[message_id]
 		# TODO check the received CRC and raise exception if incorrect
