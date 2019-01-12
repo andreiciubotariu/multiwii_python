@@ -6,13 +6,13 @@ import time
 MSP_SERIAL_TIMEOUT = 2
 
 
-MSP_PREAMBLE = '$M'
-MSP_DIRECTION_FROM_FLIGHT_CONTROLLER = '>'
-MSP_DIRECTION_TO_FLIGHT_CONTROLLER = '<'
+MSP_PREAMBLE = b'$M'
+MSP_DIRECTION_FROM_FLIGHT_CONTROLLER = b'>'
+MSP_DIRECTION_TO_FLIGHT_CONTROLLER = b'<'
 
 
-MSP_CMD_IDENTITY = Struct('preamble' / Const(b'$M'),
-						  'direction' / Int8ul,
+MSP_CMD_IDENTITY = Struct('preamble' / Const(MSP_PREAMBLE),
+						  'direction' / Const(MSP_DIRECTION_FROM_FLIGHT_CONTROLLER),
 						  'size' / Int8ul,
 						  'message_id' / Const(100, Int8ul),
 						  'version' / Int8ul,
