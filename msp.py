@@ -75,8 +75,14 @@ class MSP:
 		self.send_construct(request, parameters)
 
 		parser = MSP_RECEIVE_CONSTRUCTS[message_id]
-		# TODO check the received CRC and raise exception if incorrect
-		return parser.parse(self.read(parser.sizeof()))
+
+		received_data = self.read(parser.sizeof())
+		crc = self.calc_crc(received_data[MSP_DATASIZE_INDEX:-1])
+		parsed_data = parser.parse(received_data)
+		if (crc != parsed_data.crc):
+			raise ValueError("CRC does not match. Expected {0} but got {1}".format(crc, parsed_data.crc))
+
+		return parsed_data
 
 	def read(self, num_bytes):
 		return self.serial.read(num_bytes)
