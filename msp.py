@@ -25,24 +25,15 @@ MSP_CONSTRUCTS = {
 						  'crc' / Int8ul)
 }
 
-MSP_CMD_IDENTITY = Struct('preamble' / Const(MSP_PREAMBLE),
-						  'direction' / Const(MSP_DIRECTION_FROM_FLIGHT_CONTROLLER),
-						  'size' / Int8ul,
-						  'message_id' / Const(100, Int8ul),
-						  'version' / Int8ul,
-						  'multitype' / Int8ul,
-						  'msp_version' / Int8ul,
-						  'capability' / Int32ul,
-						  'crc' / Int8ul)
-
-
 class MSP:
 
 	def __init__(self, port, serial_delay=15):
 		self.serial = Serial(port=port, 
 							 baudrate=115200,
 							 timeout=MSP_SERIAL_TIMEOUT)
+		print('Waiting {0} seconds for board to wakeup'.format(serial_delay))
 		time.sleep(serial_delay)
+		print('Done')
 
 	def send_data(self, message_id, data):
 		pass
