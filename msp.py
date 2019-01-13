@@ -54,9 +54,9 @@ class MSP:
         self.serial = Serial(port=port, 
                              baudrate=MSP_SERIAL_BAUD,
                              timeout=MSP_SERIAL_TIMEOUT)
-        print('Waiting {0} seconds for board to wakeup'.format(serial_delay))
+        print('Waiting {0} seconds for board to wake up'.format(serial_delay))
         time.sleep(serial_delay)
-        print('Done')
+        print('Done waiting')
 
 
     def calc_crc(self, data):
@@ -73,10 +73,7 @@ class MSP:
     def send_construct(self, cmd, parameters):
         data = cmd.build(parameters)
         crc = self.calc_crc(data[MSP_DATASIZE_INDEX::])
-        print("CRC", crc)
         data += crc.to_bytes(1, byteorder='little')
-        print(data)
-        print(len(data))
         self.serial.write(data)
 
     def request_info(self, message_id, parameters={}):
@@ -101,7 +98,7 @@ class MSP:
             raise
 
         if (crc != parsed_data.crc):
-            raise ValueError("CRC does not match. Expected {0} but got {1}".format(crc, parsed_data.crc))
+            raise ValueError("CRC does not match. Expected {0} but got {1}\nData: {2}".format(crc, parsed_data.crc, parsed_data))
 
         return parsed_data
 
@@ -112,7 +109,6 @@ class MSP:
 serial_port = "/dev/ttyUSB0"
 
 msp = MSP(serial_port)
+
 print(msp.request_info(MSP_IDENT))
-
 print(msp.request_info(MSP_GET_WP, {'wp_no': 0}))
-
