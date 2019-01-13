@@ -26,14 +26,14 @@ MSP_PARAMETERIZED_REQUESTS = {
 
 MSP_RECEIVE_CONSTRUCTS = {
     MSP_IDENT : Struct('preamble' / Const(MSP_PREAMBLE),
-                          'direction' / Const(MSP_DIR_FROM_BOARD),
-                          'size' / Int8ul,
-                          'message_id' / Const(MSP_IDENT, Int8ul),
-                          'version' / Int8ul,
-                          'multitype' / Int8ul,
-                          'msp_version' / Int8ul,
-                          'capability' / Int32ul,
-                          'crc' / Int8ul),
+                       'direction' / Const(MSP_DIR_FROM_BOARD),
+                       'size' / Int8ul,
+                       'message_id' / Const(MSP_IDENT, Int8ul),
+                       'version' / Int8ul,
+                       'multitype' / Int8ul,
+                       'msp_version' / Int8ul,
+                       'capability' / Int32ul,
+                       'crc' / Int8ul),
 
     MSP_GET_WP : Struct('preamble' / Const(MSP_PREAMBLE),
                         'direction' / Const(MSP_DIR_FROM_BOARD),
@@ -104,11 +104,16 @@ class MSP:
 
     def read(self, num_bytes):
         return self.serial.read(num_bytes)
-        
+
+    def close(self):
+        self.serial.close()    
 
 serial_port = "/dev/ttyUSB0"
 
 msp = MSP(serial_port)
 
 print(msp.request_info(MSP_IDENT))
-print(msp.request_info(MSP_GET_WP, {'wp_no': 0}))
+print(msp.request_info(MSP_GET_WP, {'wp_no': 1}))
+
+msp.close()
+
