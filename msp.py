@@ -9,12 +9,30 @@ MSP_SERIAL_TIMEOUT = 2
 # Message IDs (commands)
 MSP_IDENT = 100
 MSP_GET_WP = 118
+MSP_SET_WP = 209
 
 
 MSP_PREAMBLE = b'$M'
 MSP_DIR_FROM_BOARD = b'>'
 MSP_DIR_TO_BOARD = b'<'
 MSP_DATASIZE_INDEX = len(MSP_PREAMBLE + MSP_DIR_TO_BOARD)
+
+MSP_SEND_CONSTRUCTS = {
+    MSP_SET_WP : Struct('preamble' / Const(MSP_PREAMBLE),
+                        'direction' / Const(MSP_DIR_TO_BOARD),
+                        'size' / Const(21, Int8ul),
+                        'message_id' / Const(MSP_SET_WP, Int8ul),
+                        'wp_no' / Int8ul,
+                        'action' / Int8ul,
+                        'lat' / Int32ul,
+                        'lon' / Int32ul,
+                        'altitude' / Int32ul,
+                        'param1' / Int16ul,
+                        'param2' / Int16ul,
+                        'param3' / Int16ul,
+                        'flag' / Int8ul,
+                        'crc' / Int8ul),
+}
 
 MSP_PARAMETERIZED_REQUESTS = {
     MSP_GET_WP : Struct('preamble' / Const(MSP_PREAMBLE),
@@ -27,7 +45,7 @@ MSP_PARAMETERIZED_REQUESTS = {
 MSP_RECEIVE_CONSTRUCTS = {
     MSP_IDENT : Struct('preamble' / Const(MSP_PREAMBLE),
                        'direction' / Const(MSP_DIR_FROM_BOARD),
-                       'size' / Int8ul,
+                       'size' / Const(7, Int8ul),
                        'message_id' / Const(MSP_IDENT, Int8ul),
                        'version' / Int8ul,
                        'multitype' / Int8ul,
@@ -40,11 +58,14 @@ MSP_RECEIVE_CONSTRUCTS = {
                         'size' / Int8ul,
                         'message_id' / Const(MSP_GET_WP, Int8ul),
                         'wp_no' / Int8ul,
+                        'action' / Int8ul,
                         'lat' / Int32ul,
                         'lon' / Int32ul,
-                        'altitude_hold' / Int32ul,
-                        'heading' / Int16ul,
-                        'time_to_stay' / Int16ul,
+                        'altitude' / Int32ul,
+                        'param1' / Int16ul,
+                        'param2' / Int16ul,
+                        'param3' / Int16ul,
+                        'flag' / Int8ul,
                         'crc' / Int8ul),
 }
 
@@ -98,7 +119,7 @@ class MSP:
             raise
 
         if (crc != parsed_data.crc):
-            raise ValueError("CRC does not match. Expected {0} but got {1}\nData: {2}".format(crc, parsed_data.crc, parsed_data))
+            raise ValueError("CRC does not match. Expected {0} but got {1}. {2}".format(crc, parsed_data.crc, parsed_data))
 
         return parsed_data
 
@@ -113,6 +134,7 @@ serial_port = "/dev/ttyUSB0"
 msp = MSP(serial_port)
 
 print(msp.request_info(MSP_IDENT))
+print(msp.request_info(MSP_GET_WP, {'wp_no': 0}))
 print(msp.request_info(MSP_GET_WP, {'wp_no': 1}))
 
 msp.close()
