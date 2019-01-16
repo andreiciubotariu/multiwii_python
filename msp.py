@@ -1,5 +1,5 @@
 # TODO
-# Change lan and lon to Int32. That's how they're stored in the mission_step struct 
+# Change lan and lon to Int32. That's how they're stored in the mission_step struct
 
 from serial import Serial
 from construct import Struct, Const, Int8ul, Int16ul, Int32ul
@@ -15,7 +15,6 @@ MSP_GET_WP = 118
 MSP_NAV_STATUS = 121
 MSP_SET_WP = 209
 
-
 MSP_PREAMBLE = b'$M'
 MSP_DIR_FROM_BOARD = b'>'
 MSP_DIR_TO_BOARD = b'<'
@@ -28,7 +27,7 @@ MSP_ACK = Struct('preamble' / Const(MSP_PREAMBLE),
                  'crc' / Int8ul)
 
 
-MSP_SEND_CONSTRUCTS = {
+MSP_SETTINGS_PROVIDERS = {
     MSP_SET_WP : Struct('preamble' / Const(MSP_PREAMBLE),
                         'direction' / Const(MSP_DIR_TO_BOARD),
                         'size' / Const(21, Int8ul),
@@ -52,7 +51,7 @@ MSP_PARAMETERIZED_REQUESTS = {
                         'wp_no' / Int8ul),
 }
 
-MSP_RECEIVE_CONSTRUCTS = {
+MSP_REQUEST_RESPONSES = {
     MSP_IDENT : Struct('preamble' / Const(MSP_PREAMBLE),
                        'direction' / Const(MSP_DIR_FROM_BOARD),
                        'size' / Const(7, Int8ul),
@@ -92,7 +91,7 @@ MSP_RECEIVE_CONSTRUCTS = {
 class MSP:
 
     def __init__(self, port='/dev/ttyUSB0', serial_delay=15):
-        self.serial = Serial(port=port, 
+        self.serial = Serial(port=port,
                              baudrate=MSP_SERIAL_BAUD,
                              timeout=MSP_SERIAL_TIMEOUT)
         print('Waiting {0} seconds for board to wake up'.format(serial_delay))
@@ -105,13 +104,13 @@ class MSP:
             crc ^= a_byte
         return crc
 
-    def send_data(self, message_id, parameters):
-        self.send_construct(MSP_SEND_CONSTRUCTS[message_id], parameters);
+    def provide(self, message_id, parameters):
+        self.send_construct(MSP_SETTINGS_PROVIDERS[message_id], parameters);
 
     def read_ack(self, message_id):
         ack = self.receive_data(MSP_ACK)
         if ack.message_id != message_id:
-            raise ValueError("Received ACK for {0} but expected {1}", ack.message_id, message_id)
+            raise ValueError("Received ACK for {0} but expected {1}".format(ack.message_id, message_id))
 
     def send_construct(self, cmd, parameters):
         data = cmd.build(parameters)
@@ -133,32 +132,32 @@ class MSP:
 
         return parsed_data
 
-    def request_info(self, message_id, parameters={}):
-        request = MSP_PARAMETERIZED_REQUESTS.get(message_id, 
+    def request(self, message_id, parameters={}):
+        request = MSP_PARAMETERIZED_REQUESTS.get(message_id,
                                                  Struct('preamble' / Const(MSP_PREAMBLE),
                                                         'direction' / Const(MSP_DIR_TO_BOARD),
                                                         'size' / Const(0, Int8ul),
                                                         'message_id' / Const(message_id, Int8ul)))
         self.send_construct(request, parameters)
-        return self.receive_data(MSP_RECEIVE_CONSTRUCTS[message_id])
+        return self.receive_data(MSP_REQUEST_RESPONSES[message_id])
 
     def read(self, num_bytes):
         return self.serial.read(num_bytes)
 
     def close(self):
-        self.serial.close()    
+        self.serial.close()
 
 if __name__ == '__main__':
     serial_port = "/dev/ttyUSB0"
 
     msp = MSP(serial_port)
 
-    print(msp.request_info(MSP_IDENT))
-    print(msp.request_info(MSP_GET_WP, {'wp_no': 0}))
-    print(msp.request_info(MSP_GET_WP, {'wp_no': 5}))
+    print(msp.request(MSP_IDENT))
+    print(msp.request(MSP_GET_WP, {'wp_no': 0}))
+    print(msp.request(MSP_GET_WP, {'wp_no': 5}))
 
     print('Send waypoint')
-    msp.send_data(MSP_SET_WP, 
+    msp.provide(MSP_SET_WP,
                  {
                     'wp_no'  : 1,
                     'action' : 1,
@@ -169,10 +168,10 @@ if __name__ == '__main__':
                     'param2' : 5,
                     'param3' : 4,
                     'flag' : 0,
-                 }) 
+                 })
     msp.read_ack(MSP_SET_WP)
     print('Get same waypoint')
-    print(msp.request_info(MSP_GET_WP, {'wp_no': 1}))
-    print(msp.request_info(MSP_NAV_STATUS))
+    print(msp.request(MSP_GET_WP, {'wp_no': 1}))
+    print(msp.request(MSP_NAV_STATUS))
 
     msp.close()

@@ -15,7 +15,7 @@ MSP_WAYPOINT_ACTIONS = {
     "MISSION_LAND"         : 8,   # Land at the given position
 }
 
-# Commented out flags seem to be internal to the flight controller 
+# Commented out flags seem to be internal to the flight controller
 MSP_WAYPOINT_FLAGS = {
     "MISSION_FLAG_NONE"        : 0x00,
     "MISSION_FLAG_END"         : 0xA5, # Flags that this is the last step
@@ -23,7 +23,7 @@ MSP_WAYPOINT_FLAGS = {
     "MISSION_FLAG_HOME"        : 0x01, # Returned WP is the home position
     "MISSION_FLAG_HOLD"        : 0x02, # Returned WP is the hold position
     "MISSION_FLAG_DO_LAND"     : 0x20, # Land when reached desired point (used in RTH)
-    # "MISSION_FLAG_NAV_IN_PROG" : 0xff, # Navigation is in progress, returned wp is home     
+    # "MISSION_FLAG_NAV_IN_PROG" : 0xff, # Navigation is in progress, returned wp is home
 }
 
 # Indices in the waypoint string
@@ -39,7 +39,7 @@ IDX_FLAG = 7
 MAX_WAYPOINTS = 255
 
 def send_waypoint(protocol, params):
-    protocol.send_data(MSP_SET_WP, params)
+    protocol.provide(MSP_SET_WP, params)
     protocol.read_ack(MSP_SET_WP)
 
 if __name__ == '__main__':
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         filename = sys.argv[1]
 
-    print('Opening {0}'.format(filename))
+    print('Using {0}'.format(filename))
     with open(filename) as f:
         protocol = MSP()
         for i in range(0,MAX_WAYPOINTS):
@@ -61,7 +61,7 @@ if __name__ == '__main__':
                 continue
 
             print(waypoint)
-            send_waypoint(protocol, 
+            send_waypoint(protocol,
                 {
                     'wp_no'  : wp_no,
                     'action' : MSP_WAYPOINT_ACTIONS[waypoint[IDX_ACTION]],
@@ -73,5 +73,4 @@ if __name__ == '__main__':
                     'param3' : int(waypoint[IDX_PARAM1]),
                     'flag' : MSP_WAYPOINT_FLAGS[waypoint[IDX_FLAG]],
                 })
-            print(protocol.request_info(MSP_GET_WP, {'wp_no': wp_no}))
-
+            print(protocol.request(MSP_GET_WP, {'wp_no': wp_no}))
