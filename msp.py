@@ -170,7 +170,7 @@ if __name__ == '__main__':
                     'param3' : 4,
                     'flag' : 0,
                  }) 
-    msp.read_ack(MSP_SET_WP);
+    msp.read_ack(MSP_SET_WP)
     print('Get same waypoint')
     print(msp.request_info(MSP_GET_WP, {'wp_no': 1}))
     print(msp.request_info(MSP_NAV_STATUS))
