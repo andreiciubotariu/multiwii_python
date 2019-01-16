@@ -1,3 +1,6 @@
+# TODO
+# Change lan and lon to Int32. That's how they're stored in the mission_step struct 
+
 from serial import Serial
 from construct import Struct, Const, Int8ul, Int16ul, Int32ul
 import struct
@@ -88,7 +91,7 @@ MSP_RECEIVE_CONSTRUCTS = {
 
 class MSP:
 
-    def __init__(self, port, serial_delay=15):
+    def __init__(self, port='/dev/ttyUSB0', serial_delay=15):
         self.serial = Serial(port=port, 
                              baudrate=MSP_SERIAL_BAUD,
                              timeout=MSP_SERIAL_TIMEOUT)
@@ -145,30 +148,31 @@ class MSP:
     def close(self):
         self.serial.close()    
 
-serial_port = "/dev/ttyUSB0"
+if __name__ == '__main__':
+    serial_port = "/dev/ttyUSB0"
 
-msp = MSP(serial_port)
+    msp = MSP(serial_port)
 
-print(msp.request_info(MSP_IDENT))
-print(msp.request_info(MSP_GET_WP, {'wp_no': 0}))
-print(msp.request_info(MSP_GET_WP, {'wp_no': 5}))
+    print(msp.request_info(MSP_IDENT))
+    print(msp.request_info(MSP_GET_WP, {'wp_no': 0}))
+    print(msp.request_info(MSP_GET_WP, {'wp_no': 5}))
 
-print('Send waypoint')
-msp.send_data(MSP_SET_WP, 
-             {
-                'wp_no'  : 1,
-                'action' : 1,
-                'lat' : 4,
-                'lon' : 57,
-                'altitude' : 9,
-                'param1' : 1,
-                'param2' : 5,
-                'param3' : 4,
-                'flag' : 0,
-             }) 
-msp.read_ack(MSP_SET_WP);
-print('Get same waypoint')
-print(msp.request_info(MSP_GET_WP, {'wp_no': 1}))
-print(msp.request_info(MSP_NAV_STATUS))
+    print('Send waypoint')
+    msp.send_data(MSP_SET_WP, 
+                 {
+                    'wp_no'  : 1,
+                    'action' : 1,
+                    'lat' : 4,
+                    'lon' : 57,
+                    'altitude' : 9,
+                    'param1' : 1,
+                    'param2' : 5,
+                    'param3' : 4,
+                    'flag' : 0,
+                 }) 
+    msp.read_ack(MSP_SET_WP);
+    print('Get same waypoint')
+    print(msp.request_info(MSP_GET_WP, {'wp_no': 1}))
+    print(msp.request_info(MSP_NAV_STATUS))
 
-msp.close()
+    msp.close()

@@ -1,6 +1,8 @@
 import sys
 
-# import msp
+from msp import MSP, MSP_SET_WP, MSP_GET_WP
+
+COMMENT_START_CHAR = '#'
 
 MSP_WAYPOINT_ACTIONS = {
     "MISSION_WAYPOINT"     : 1,   # Set waypoint
@@ -15,6 +17,7 @@ MSP_WAYPOINT_ACTIONS = {
 
 # Commented out flags seem to be internal to the flight controller 
 MSP_WAYPOINT_FLAGS = {
+    "MISSION_FLAG_NONE"        : 0x00,
     "MISSION_FLAG_END"         : 0xA5, # Flags that this is the last step
     # "MISSION_FLAG_CRC_ERROR"   : 0xFE, # Returned WP had an EEPROM CRC error
     "MISSION_FLAG_HOME"        : 0x01, # Returned WP is the home position
@@ -24,16 +27,20 @@ MSP_WAYPOINT_FLAGS = {
 }
 
 # Indices in the waypoint string
-LAT = 0
-LON = 1
-ACTION = 2
-ALTITUDE = 3
-PARAM1 = 4
-PARAM2 = 5
-PARAM3 = 6
-FLAG = 7
+IDX_LAT = 0
+IDX_LON = 1
+IDX_ACTION = 2
+IDX_ALTITUDE = 3
+IDX_PARAM1 = 4
+IDX_PARAM2 = 5
+IDX_PARAM3 = 6
+IDX_FLAG = 7
 
 MAX_WAYPOINTS = 255
+
+def send_waypoint(protocol, params):
+    protocol.send_data(MSP_SET_WP, params)
+    protocol.read_ack(MSP_SET_WP)
 
 if __name__ == '__main__':
     filename = 'waypoints.txt'
@@ -42,11 +49,29 @@ if __name__ == '__main__':
 
     print('Opening {0}'.format(filename))
     with open(filename) as f:
-        print('Reading files')
+        protocol = MSP()
         for i in range(0,MAX_WAYPOINTS):
+            wp_no = i+1
+
             line = f.readline().strip()
             if not line:
                 break
             waypoint = line.split(' ')
+            if waypoint[0].startswith(COMMENT_START_CHAR):
+                continue
+
             print(waypoint)
+            send_waypoint(protocol, 
+                {
+                    'wp_no'  : wp_no,
+                    'action' : MSP_WAYPOINT_ACTIONS[waypoint[IDX_ACTION]],
+                    'lat' : int(waypoint[IDX_LAT]),
+                    'lon' : int(waypoint[IDX_LON]),
+                    'altitude' : int(waypoint[IDX_ALTITUDE]),
+                    'param1' : int(waypoint[IDX_PARAM1]),
+                    'param2' : int(waypoint[IDX_PARAM1]),
+                    'param3' : int(waypoint[IDX_PARAM1]),
+                    'flag' : MSP_WAYPOINT_FLAGS[waypoint[IDX_FLAG]],
+                })
+            print(protocol.request_info(MSP_GET_WP, {'wp_no': wp_no}))
 
