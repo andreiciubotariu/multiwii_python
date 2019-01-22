@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
     print('Using {0}'.format(filename))
     with open(filename) as f:
-        protocol = MSP()
+        protocol = MSP('/dev/ttyACM0')
         for i in range(0,MAX_WAYPOINTS):
             wp_no = i+1
 

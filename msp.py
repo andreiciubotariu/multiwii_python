@@ -90,9 +90,9 @@ MSP_REQUEST_RESPONSES = {
 
 class MSP:
 
-    def __init__(self, port='/dev/ttyUSB0', serial_delay=15):
+    def __init__(self, port='/dev/ttyUSB0', baudrate=MSP_SERIAL_BAUD, serial_delay=15):
         self.serial = Serial(port=port,
-                             baudrate=MSP_SERIAL_BAUD,
+                             baudrate=baudrate,
                              timeout=MSP_SERIAL_TIMEOUT)
         print('Waiting {0} seconds for board to wake up'.format(serial_delay))
         time.sleep(serial_delay)
@@ -148,7 +148,7 @@ class MSP:
         self.serial.close()
 
 if __name__ == '__main__':
-    serial_port = "/dev/ttyUSB0"
+    serial_port = "/dev/ttyACM0"
 
     msp = MSP(serial_port)
 
