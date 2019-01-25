@@ -69,8 +69,8 @@ if __name__ == '__main__':
                     'lon' : int(waypoint[IDX_LON]),
                     'altitude' : int(waypoint[IDX_ALTITUDE]),
                     'param1' : int(waypoint[IDX_PARAM1]),
-                    'param2' : int(waypoint[IDX_PARAM1]),
-                    'param3' : int(waypoint[IDX_PARAM1]),
+                    'param2' : int(waypoint[IDX_PARAM2]),
+                    'param3' : int(waypoint[IDX_PARAM3]),
                     'flag' : MSP_WAYPOINT_FLAGS[waypoint[IDX_FLAG]],
                 })
             print(protocol.request(MSP_GET_WP, {'wp_no': wp_no}))
