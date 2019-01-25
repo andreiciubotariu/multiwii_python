@@ -1,5 +1,6 @@
 # TODO
 # Change lan and lon to Int32. That's how they're stored in the mission_step struct
+from builtins import bytes # For python2/3 compatibility
 
 from serial import Serial
 from construct import Struct, Const, Int8ul, Int16ul, Int32ul
@@ -99,6 +100,7 @@ class MSP:
         print('Done waiting')
 
     def calc_crc(self, data):
+        data = bytes(data) # for python2/3 compatibility
         crc = 0
         for a_byte in data:
             crc ^= a_byte
@@ -115,7 +117,7 @@ class MSP:
     def send_construct(self, cmd, parameters):
         data = cmd.build(parameters)
         crc = self.calc_crc(data[MSP_DATASIZE_INDEX::])
-        data += crc.to_bytes(1, byteorder='little')
+        data += struct.pack('<i', crc) # python2/3 compatible. data += crc.to_bytes(1, byteorder='little') python3 only
         self.serial.write(data)
 
     def receive_data(self, parser):
