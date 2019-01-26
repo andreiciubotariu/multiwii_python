@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 # TODO
 # Change lan and lon to Int32. That's how they're stored in the mission_step struct
 from builtins import bytes # For python2/3 compatibility
@@ -20,6 +22,11 @@ MSP_PREAMBLE = b'$M'
 MSP_DIR_FROM_BOARD = b'>'
 MSP_DIR_TO_BOARD = b'<'
 MSP_DATASIZE_INDEX = len(MSP_PREAMBLE + MSP_DIR_TO_BOARD)
+
+MSP_RECVD_HEADER = Struct('preamble' / Const(MSP_PREAMBLE),
+                          'direction' / Const(MSP_DIR_FROM_BOARD),
+                          'size' / Int8ul,
+                          'message_id' / Int8ul)
 
 MSP_ACK = Struct('preamble' / Const(MSP_PREAMBLE),
                  'direction' / Const(MSP_DIR_FROM_BOARD),
@@ -92,12 +99,13 @@ MSP_REQUEST_RESPONSES = {
 class MSP:
 
     def __init__(self, port='/dev/ttyUSB0', baudrate=MSP_SERIAL_BAUD, serial_delay=15):
-        self.serial = Serial(port=port,
-                             baudrate=baudrate,
-                             timeout=MSP_SERIAL_TIMEOUT)
-        print('Waiting {0} seconds for board to wake up'.format(serial_delay))
-        time.sleep(serial_delay)
-        print('Done waiting')
+        if port is not None:
+            self.serial = Serial(port=port,
+                                 baudrate=baudrate,
+                                 timeout=MSP_SERIAL_TIMEOUT)
+            print('Waiting {0} seconds for board to wake up'.format(serial_delay))
+            time.sleep(serial_delay)
+            print('Done waiting')
 
     def calc_crc(self, data):
         data = bytes(data) # for python2/3 compatibility
@@ -107,41 +115,55 @@ class MSP:
         return crc
 
     def provide(self, message_id, parameters):
-        self.send_construct(MSP_SETTINGS_PROVIDERS[message_id], parameters);
+        self.send(self.build(self.get_provider(message_id), parameters))
 
     def read_ack(self, message_id):
         ack = self.receive_data(MSP_ACK)
         if ack.message_id != message_id:
             raise ValueError("Received ACK for {0} but expected {1}".format(ack.message_id, message_id))
 
-    def send_construct(self, cmd, parameters):
+    def get_provider(self, message_id):
+        return MSP_SETTINGS_PROVIDERS[message_id]
+
+    def get_request(self, message_id):
+        return MSP_PARAMETERIZED_REQUESTS.get(message_id,
+                                             Struct('preamble' / Const(MSP_PREAMBLE),
+                                                    'direction' / Const(MSP_DIR_TO_BOARD),
+                                                    'size' / Const(0, Int8ul),
+                                                    'message_id' / Const(message_id, Int8ul)))
+    def get_response(self, message_id):
+        return MSP_REQUEST_RESPONSES[message_id]
+
+    def build(self, cmd, parameters):
         data = cmd.build(parameters)
         crc = self.calc_crc(data[MSP_DATASIZE_INDEX::])
         data += struct.pack('<i', crc) # python2/3 compatible. data += crc.to_bytes(1, byteorder='little') python3 only
+        return data
+
+    def parse(self, data, template, crc_data=True):
+        try:
+            parsed_data = template.parse(data)
+        except:
+            print("Attempted to parse", data)
+            raise
+
+        if crc_data:
+            crc = self.calc_crc(data[MSP_DATASIZE_INDEX:-1])
+            if (crc != parsed_data.crc):
+                raise ValueError("CRC does not match. Expected {0} but got {1}. {2}".format(crc, parsed_data.crc, parsed_data))
+
+        return parsed_data
+
+    def send(self, data):
         self.serial.write(data)
 
     def receive_data(self, parser):
         received_data = self.read(parser.sizeof())
-        crc = self.calc_crc(received_data[MSP_DATASIZE_INDEX:-1])
-        try:
-            parsed_data = parser.parse(received_data)
-        except:
-            print("received_data: ", received_data)
-            raise
-
-        if (crc != parsed_data.crc):
-            raise ValueError("CRC does not match. Expected {0} but got {1}. {2}".format(crc, parsed_data.crc, parsed_data))
-
-        return parsed_data
+        return self.parse(received_data, parser)
 
     def request(self, message_id, parameters={}):
-        request = MSP_PARAMETERIZED_REQUESTS.get(message_id,
-                                                 Struct('preamble' / Const(MSP_PREAMBLE),
-                                                        'direction' / Const(MSP_DIR_TO_BOARD),
-                                                        'size' / Const(0, Int8ul),
-                                                        'message_id' / Const(message_id, Int8ul)))
-        self.send_construct(request, parameters)
-        return self.receive_data(MSP_REQUEST_RESPONSES[message_id])
+        self.send(self.build(self.get_request(message_id), parameters))
+        return self.receive_data(self.get_response(message_id))
 
     def read(self, num_bytes):
         return self.serial.read(num_bytes)
