@@ -98,13 +98,11 @@ MSP_REQUEST_RESPONSES = {
 
 class MSP:
 
-    def __init__(self, port='/dev/ttyUSB0', baudrate=MSP_SERIAL_BAUD, serial_delay=15):
-        if port is not None:
-            self.serial = Serial(port=port,
-                                 baudrate=baudrate,
-                                 timeout=MSP_SERIAL_TIMEOUT)
-            print('Waiting {0} seconds for board to wake up'.format(serial_delay))
-            time.sleep(serial_delay)
+    def __init__(self, transport, initialization_delay=0):
+        self.transport = transport
+        if transport is not None and initialization_delay > 0:
+            print('Waiting {0} seconds for board to wake up'.format(initialization_delay))
+            time.sleep(initialization_delay)
             print('Done waiting')
 
     def calc_crc(self, data):
@@ -127,17 +125,17 @@ class MSP:
 
     def get_request(self, message_id):
         return MSP_PARAMETERIZED_REQUESTS.get(message_id,
-                                             Struct('preamble' / Const(MSP_PREAMBLE),
-                                                    'direction' / Const(MSP_DIR_TO_BOARD),
-                                                    'size' / Const(0, Int8ul),
-                                                    'message_id' / Const(message_id, Int8ul)))
+                                              Struct('preamble' / Const(MSP_PREAMBLE),
+                                                     'direction' / Const(MSP_DIR_TO_BOARD),
+                                                     'size' / Const(0, Int8ul),
+                                                     'message_id' / Const(message_id, Int8ul)))
     def get_response(self, message_id):
         return MSP_REQUEST_RESPONSES[message_id]
 
     def build(self, cmd, parameters):
         data = cmd.build(parameters)
         crc = self.calc_crc(data[MSP_DATASIZE_INDEX::])
-        data += struct.pack('<i', crc) # python2/3 compatible. data += crc.to_bytes(1, byteorder='little') python3 only
+        data += struct.pack('<B', crc) # python2/3 compatible. data += crc.to_bytes(1, byteorder='little') python3 only
         return data
 
     def parse(self, data, template, crc_data=True):
@@ -155,7 +153,8 @@ class MSP:
         return parsed_data
 
     def send(self, data):
-        self.serial.write(data)
+        print('Sending MSP len', len(data))
+        self.transport.write(data)
 
     def receive_data(self, parser):
         received_data = self.read(parser.sizeof())
@@ -166,15 +165,13 @@ class MSP:
         return self.receive_data(self.get_response(message_id))
 
     def read(self, num_bytes):
-        return self.serial.read(num_bytes)
-
-    def close(self):
-        self.serial.close()
+        return self.transport.read(num_bytes)
 
 if __name__ == '__main__':
-    serial_port = "/dev/ttyACM0"
-
-    msp = MSP(serial_port)
+    transport = Serial(port='/dev/ttyACM0',
+                       baudrate=115200,
+                       timeout=5)
+    msp = MSP(transport, initialization_delay=15)
 
     print(msp.request(MSP_IDENT))
     print(msp.request(MSP_GET_WP, {'wp_no': 0}))
@@ -182,7 +179,7 @@ if __name__ == '__main__':
 
     print('Send waypoint')
     msp.provide(MSP_SET_WP,
-                 {
+                {
                     'wp_no'  : 1,
                     'action' : 1,
                     'lat' : 4,
@@ -192,10 +189,10 @@ if __name__ == '__main__':
                     'param2' : 5,
                     'param3' : 4,
                     'flag' : 0,
-                 })
+                })
     msp.read_ack(MSP_SET_WP)
     print('Get same waypoint')
     print(msp.request(MSP_GET_WP, {'wp_no': 1}))
     print(msp.request(MSP_NAV_STATUS))
 
-    msp.close()
+    transport.close()
