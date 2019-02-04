@@ -1,6 +1,7 @@
 import sys
 
 from msp import MSP, MSP_SET_WP, MSP_GET_WP
+from serial import Serial
 
 COMMENT_START_CHAR = '#'
 
@@ -49,7 +50,10 @@ if __name__ == '__main__':
 
     print('Using {0}'.format(filename))
     with open(filename) as f:
-        protocol = MSP('/dev/ttyACM0')
+        transport = Serial(port='/dev/ttyUSB0',
+                       baudrate=115200,
+                       timeout=5)
+        protocol = MSP(transport, initialization_delay=15)
         for i in range(0,MAX_WAYPOINTS):
             wp_no = i+1
 
