@@ -13,6 +13,10 @@ MSP_SERIAL_BAUD = 115200
 MSP_SERIAL_TIMEOUT = 5
 
 # Message IDs (commands)
+# Custom commands
+MSP_GPS_REPORT_INTERVAL = 50
+
+# Standard commands
 MSP_IDENT = 100
 MSP_GET_WP = 118
 MSP_NAV_STATUS = 121
@@ -49,6 +53,11 @@ MSP_SETTINGS_PROVIDERS = {
                         'param2' / Int16ul,
                         'param3' / Int16ul,
                         'flag' / Int8ul),
+    MSP_GPS_REPORT_INTERVAL : Struct('preamble' / Const(MSP_PREAMBLE),
+                                     'direction' / Const(MSP_DIR_TO_BOARD),
+                                     'size' / Const(4, Int8ul),
+                                     'message_id' / Const(MSP_GPS_REPORT_INTERVAL, Int8ul),
+                                     'gps_report_interval' / Int32ul),
 }
 
 MSP_PARAMETERIZED_REQUESTS = {
