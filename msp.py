@@ -13,7 +13,12 @@ MSP_SERIAL_BAUD = 115200
 MSP_SERIAL_TIMEOUT = 5
 
 # Message IDs (commands)
+# Custom commands
+MSP_GPS_REPORT_INTERVAL = 50
+
+# Standard commands
 MSP_IDENT = 100
+MSP_RAW_GPS = 106
 MSP_GET_WP = 118
 MSP_NAV_STATUS = 121
 MSP_SET_WP = 209
@@ -49,6 +54,11 @@ MSP_SETTINGS_PROVIDERS = {
                         'param2' / Int16ul,
                         'param3' / Int16ul,
                         'flag' / Int8ul),
+    MSP_GPS_REPORT_INTERVAL : Struct('preamble' / Const(MSP_PREAMBLE),
+                                     'direction' / Const(MSP_DIR_TO_BOARD),
+                                     'size' / Const(4, Int8ul),
+                                     'message_id' / Const(MSP_GPS_REPORT_INTERVAL, Int8ul),
+                                     'gps_report_interval' / Int32ul),
 }
 
 MSP_PARAMETERIZED_REQUESTS = {
@@ -94,6 +104,19 @@ MSP_REQUEST_RESPONSES = {
                             'nav_error' / Int8ul,
                             'target_bearing' / Int16ul,
                             'crc' / Int8ul),
+
+    MSP_RAW_GPS: Struct('preamble' / Const(MSP_PREAMBLE),
+                        'direction' / Const(MSP_DIR_FROM_BOARD),
+                        'size' / Const(16, Int8ul),
+                        'message_id' / Const(MSP_RAW_GPS, Int8ul),
+                        'has_fix' / Int8ul,
+                        'num_satellites' / Int8ul,
+                        'lat' / Int32ul,
+                        'lon' / Int32ul,
+                        'altitude' / Int16ul,
+                        'speed' / Int16ul,
+                        'ground_course' / Int16ul,
+                        'crc' / Int8ul),
 }
 
 class MSP:
@@ -143,6 +166,8 @@ class MSP:
             parsed_data = template.parse(data)
         except:
             print("Attempted to parse", data)
+            for temp in data:
+                print(temp.encode('hex'))
             raise
 
         if crc_data:
@@ -167,11 +192,22 @@ class MSP:
     def read(self, num_bytes):
         return self.transport.read(num_bytes)
 
+def stop_gps_updates(msp):
+    msp.provide(MSP_GPS_REPORT_INTERVAL, {'gps_report_interval': 0})
+    # Clear buffer of last GPS update
+
+    temp = msp.read(1)
+    while len(temp) > 0:
+        temp = msp.read(1)
+
+
 if __name__ == '__main__':
     transport = Serial(port='/dev/ttyACM0',
                        baudrate=115200,
                        timeout=5)
     msp = MSP(transport, initialization_delay=15)
+
+    stop_gps_updates(msp)
 
     print(msp.request(MSP_IDENT))
     print(msp.request(MSP_GET_WP, {'wp_no': 0}))
@@ -194,5 +230,14 @@ if __name__ == '__main__':
     print('Get same waypoint')
     print(msp.request(MSP_GET_WP, {'wp_no': 1}))
     print(msp.request(MSP_NAV_STATUS))
+
+    msp.provide(MSP_GPS_REPORT_INTERVAL, {'gps_report_interval': 1000})
+
+    counter = 0
+    while True:
+        print(counter)
+        print(msp.receive_data(msp.get_response(MSP_RAW_GPS)))
+        counter += 1
+
 
     transport.close()

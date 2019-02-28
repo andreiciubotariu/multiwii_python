@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 
 from msp import MSP, MSP_SET_WP, MSP_GET_WP
@@ -50,9 +51,10 @@ if __name__ == '__main__':
 
     print('Using {0}'.format(filename))
     with open(filename) as f:
-        transport = Serial(port='/dev/ttyUSB0',
+        transport = Serial(port='/dev/ttyACM0',
                        baudrate=115200,
                        timeout=5)
+        print(transport)
         protocol = MSP(transport, initialization_delay=15)
         for i in range(0,MAX_WAYPOINTS):
             wp_no = i+1
