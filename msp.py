@@ -116,7 +116,7 @@ MSP_REQUEST_RESPONSES = {
                         'altitude' / Int16ul,
                         'speed' / Int16ul,
                         'ground_course' / Int16ul,
-                        'crc' / Int16ul),
+                        'crc' / Int8ul),
 }
 
 class MSP:
@@ -233,8 +233,11 @@ if __name__ == '__main__':
 
     msp.provide(MSP_GPS_REPORT_INTERVAL, {'gps_report_interval': 1000})
 
+    counter = 0
     while True:
+        print(counter)
         print(msp.receive_data(msp.get_response(MSP_RAW_GPS)))
+        counter += 1
 
 
     transport.close()
