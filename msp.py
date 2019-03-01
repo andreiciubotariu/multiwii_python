@@ -209,26 +209,27 @@ if __name__ == '__main__':
     stop_gps_updates(msp)
 
     print(msp.request(MSP_IDENT))
-    print(msp.request(MSP_GET_WP, {'wp_no': 0}))
-    print(msp.request(MSP_GET_WP, {'wp_no': 5}))
 
-    print('Send waypoint')
-    msp.provide(MSP_SET_WP,
-                {
-                    'wp_no'  : 1,
-                    'action' : 1,
-                    'lat' : 4,
-                    'lon' : 57,
-                    'altitude' : 9,
-                    'param1' : 1,
-                    'param2' : 5,
-                    'param3' : 4,
-                    'flag' : 0,
-                })
-    msp.read_ack(MSP_SET_WP)
-    print('Get same waypoint')
-    print(msp.request(MSP_GET_WP, {'wp_no': 1}))
-    print(msp.request(MSP_NAV_STATUS))
+    # print(msp.request(MSP_GET_WP, {'wp_no': 0}))
+    # print(msp.request(MSP_GET_WP, {'wp_no': 5}))
+
+    # print('Send waypoint')
+    # msp.provide(MSP_SET_WP,
+    #             {
+    #                 'wp_no'  : 1,
+    #                 'action' : 1,
+    #                 'lat' : 4,
+    #                 'lon' : 57,
+    #                 'altitude' : 9,
+    #                 'param1' : 1,
+    #                 'param2' : 5,
+    #                 'param3' : 4,
+    #                 'flag' : 0,
+    #             })
+    # msp.read_ack(MSP_SET_WP)
+    # print('Get same waypoint')
+    # print(msp.request(MSP_GET_WP, {'wp_no': 1}))
+    # print(msp.request(MSP_NAV_STATUS))
 
     msp.provide(MSP_GPS_REPORT_INTERVAL, {'gps_report_interval': 1000})
 
