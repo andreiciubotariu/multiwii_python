@@ -1,11 +1,9 @@
 from __future__ import print_function
 
-# TODO
-# Change lan and lon to Int32. That's how they're stored in the mission_step struct
 from builtins import bytes # For python2/3 compatibility
 
 from serial import Serial
-from construct import Struct, Const, Int8ul, Int16ul, Int32ul
+from construct import Struct, Const, Int8ul, Int16ul, Int32ul, Int32sl
 import struct
 import time
 import traceback
@@ -48,8 +46,8 @@ MSP_SETTINGS_PROVIDERS = {
                         'message_id' / Const(MSP_SET_WP, Int8ul),
                         'wp_no' / Int8ul,
                         'action' / Int8ul,
-                        'lat' / Int32ul,
-                        'lon' / Int32ul,
+                        'lat' / Int32sl,
+                        'lon' / Int32sl,
                         'altitude' / Int32ul,
                         'param1' / Int16ul,
                         'param2' / Int16ul,
@@ -86,8 +84,8 @@ MSP_REQUEST_RESPONSES = {
                         'message_id' / Const(MSP_GET_WP, Int8ul),
                         'wp_no' / Int8ul,
                         'action' / Int8ul,
-                        'lat' / Int32ul,
-                        'lon' / Int32ul,
+                        'lat' / Int32sl,
+                        'lon' / Int32sl,
                         'altitude' / Int32ul,
                         'param1' / Int16ul,
                         'param2' / Int16ul,
@@ -112,8 +110,8 @@ MSP_REQUEST_RESPONSES = {
                         'message_id' / Const(MSP_RAW_GPS, Int8ul),
                         'has_fix' / Int8ul,
                         'num_satellites' / Int8ul,
-                        'lat' / Int32ul,
-                        'lon' / Int32ul,
+                        'lat' / Int32sl,
+                        'lon' / Int32sl,
                         'altitude' / Int16ul,
                         'speed' / Int16ul,
                         'ground_course' / Int16ul,
