@@ -8,6 +8,7 @@ from serial import Serial
 from construct import Struct, Const, Int8ul, Int16ul, Int32ul
 import struct
 import time
+import traceback
 
 MSP_SERIAL_BAUD = 115200
 MSP_SERIAL_TIMEOUT = 5
@@ -166,8 +167,6 @@ class MSP:
             parsed_data = template.parse(data)
         except:
             print("Attempted to parse", data)
-            for temp in data:
-                print(temp.encode('hex'))
             raise
 
         if crc_data:
