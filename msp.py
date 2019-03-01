@@ -3,7 +3,7 @@ from __future__ import print_function
 from builtins import bytes # For python2/3 compatibility
 
 from serial import Serial
-from construct import Struct, Const, Int8ul, Int16ul, Int32ul, Int32sl
+from construct import Struct, Const, Int8ul, Int16ul, Int16sl, Int32ul, Int32sl
 import struct
 import time
 import traceback
@@ -18,6 +18,7 @@ MSP_GPS_REPORT_INTERVAL = 50
 # Standard commands
 MSP_IDENT = 100
 MSP_RAW_GPS = 106
+MSP_ALTITUDE = 109
 MSP_GET_WP = 118
 MSP_NAV_STATUS = 121
 MSP_SET_WP = 209
@@ -104,18 +105,26 @@ MSP_REQUEST_RESPONSES = {
                             'target_bearing' / Int16ul,
                             'crc' / Int8ul),
 
-    MSP_RAW_GPS: Struct('preamble' / Const(MSP_PREAMBLE),
-                        'direction' / Const(MSP_DIR_FROM_BOARD),
-                        'size' / Const(16, Int8ul),
-                        'message_id' / Const(MSP_RAW_GPS, Int8ul),
-                        'has_fix' / Int8ul,
-                        'num_satellites' / Int8ul,
-                        'lat' / Int32sl,
-                        'lon' / Int32sl,
-                        'altitude' / Int16ul,
-                        'speed' / Int16ul,
-                        'ground_course' / Int16ul,
-                        'crc' / Int8ul),
+    MSP_RAW_GPS : Struct('preamble' / Const(MSP_PREAMBLE),
+                         'direction' / Const(MSP_DIR_FROM_BOARD),
+                         'size' / Const(16, Int8ul),
+                         'message_id' / Const(MSP_RAW_GPS, Int8ul),
+                         'has_fix' / Int8ul,
+                         'num_satellites' / Int8ul,
+                         'lat' / Int32sl,
+                         'lon' / Int32sl,
+                         'altitude' / Int16ul,
+                         'speed' / Int16ul,
+                         'ground_course' / Int16ul,
+                         'crc' / Int8ul),
+
+    MSP_ALTITUDE : Struct('preamble' / Const(MSP_PREAMBLE),
+                          'direction' / Const(MSP_DIR_FROM_BOARD),
+                          'size' / Const(6, Int8ul),
+                          'message_id' / Const(MSP_ALTITUDE, Int8ul),
+                          'estimated_alt' / Int32sl,
+                          'vario' / Int16sl,
+                          'crc' / Int8ul),
 }
 
 class MSP:
@@ -229,13 +238,19 @@ if __name__ == '__main__':
     # print(msp.request(MSP_GET_WP, {'wp_no': 1}))
     # print(msp.request(MSP_NAV_STATUS))
 
-    msp.provide(MSP_GPS_REPORT_INTERVAL, {'gps_report_interval': 1000})
+    # msp.provide(MSP_GPS_REPORT_INTERVAL, {'gps_report_interval': 1000})
 
     counter = 0
+    # while True:
+    #     print(counter)
+    #     print(msp.receive_data(msp.get_response(MSP_RAW_GPS)))
+    #     counter += 1
+
     while True:
         print(counter)
-        print(msp.receive_data(msp.get_response(MSP_RAW_GPS)))
+        print(msp.request(MSP_ALTITUDE))
         counter += 1
+        time.sleep(1)
 
 
     transport.close()
