@@ -14,6 +14,7 @@ MSP_SERIAL_TIMEOUT = 5
 # Message IDs (commands)
 # Custom commands
 MSP_GPS_REPORT_INTERVAL = 50
+MSP_PERIODIC_GPS_REPORT = 51
 
 # Standard commands
 MSP_IDENT = 100
@@ -118,6 +119,22 @@ MSP_REQUEST_RESPONSES = {
                          'ground_course' / Int16ul,
                          'crc' / Int8ul),
 
+    MSP_PERIODIC_GPS_REPORT : Struct('preamble' / Const(MSP_PREAMBLE),
+                                     'direction' / Const(MSP_DIR_FROM_BOARD),
+                                     'size' / Const(26, Int8ul),
+                                     'message_id' / Const(MSP_PERIODIC_GPS_REPORT, Int8ul),
+                                     'gps_has_fix' / Int8ul,
+                                     'gps_num_satellites' / Int8ul,
+                                     'gps_lat' / Int32sl,
+                                     'gps_lon' / Int32sl,
+                                     'gps_altitude' / Int16ul,
+                                     'gps_speed' / Int16ul,
+                                     'gps_ground_course' / Int16ul,
+                                     'baro_estimated_alt' / Int32sl,
+                                     'baro_vario' / Int16sl,
+                                     'timestamp' / Int32ul,
+                                     'crc' / Int8ul),
+
     MSP_ALTITUDE : Struct('preamble' / Const(MSP_PREAMBLE),
                           'direction' / Const(MSP_DIR_FROM_BOARD),
                           'size' / Const(6, Int8ul),
@@ -125,6 +142,7 @@ MSP_REQUEST_RESPONSES = {
                           'estimated_alt' / Int32sl,
                           'vario' / Int16sl,
                           'crc' / Int8ul),
+
 }
 
 class MSP:
