@@ -29,6 +29,7 @@ MSP_SET_WP = 209
 MSP_PREAMBLE = b'$M'
 MSP_DIR_FROM_BOARD = b'>'
 MSP_DIR_TO_BOARD = b'<'
+MSP_HAS_ERROR = b'!'
 MSP_DATASIZE_INDEX = len(MSP_PREAMBLE + MSP_DIR_TO_BOARD)
 
 MSP_RECVD_HEADER = Struct('preamble' / Const(MSP_PREAMBLE),
@@ -38,6 +39,12 @@ MSP_RECVD_HEADER = Struct('preamble' / Const(MSP_PREAMBLE),
 
 MSP_ACK = Struct('preamble' / Const(MSP_PREAMBLE),
                  'direction' / Const(MSP_DIR_FROM_BOARD),
+                 'size' / Const(0, Int8ul),
+                 'message_id' / Int8ul,
+                 'crc' / Int8ul)
+
+MSP_ERROR = Struct('preamble' / Const(MSP_PREAMBLE),
+                 'direction' / Const(MSP_HAS_ERROR),
                  'size' / Const(0, Int8ul),
                  'message_id' / Int8ul,
                  'crc' / Int8ul)
