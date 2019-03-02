@@ -15,6 +15,8 @@ MSP_SERIAL_TIMEOUT = 5
 # Custom commands
 MSP_GPS_REPORT_INTERVAL = 50
 MSP_PERIODIC_GPS_REPORT = 51
+MSP_SET_RC_OVERRIDES = 52
+MSP_GET_RC_OVERRIDES = 53
 
 # Standard commands
 MSP_IDENT = 100
@@ -55,11 +57,18 @@ MSP_SETTINGS_PROVIDERS = {
                         'param2' / Int16ul,
                         'param3' / Int16ul,
                         'flag' / Int8ul),
+
     MSP_GPS_REPORT_INTERVAL : Struct('preamble' / Const(MSP_PREAMBLE),
                                      'direction' / Const(MSP_DIR_TO_BOARD),
                                      'size' / Const(4, Int8ul),
                                      'message_id' / Const(MSP_GPS_REPORT_INTERVAL, Int8ul),
                                      'gps_report_interval' / Int32ul),
+
+    MSP_SET_RC_OVERRIDES : Struct('preamble' / Const(MSP_PREAMBLE),
+                                  'direction' / Const(MSP_DIR_TO_BOARD),
+                                  'size' / Const(1, Int8ul),
+                                  'message_id' / Const(MSP_SET_RC_OVERRIDES, Int8ul),
+                                  'rc_overrides' / Int8ul),
 }
 
 MSP_PARAMETERIZED_REQUESTS = {
@@ -142,6 +151,13 @@ MSP_REQUEST_RESPONSES = {
                           'estimated_alt' / Int32sl,
                           'vario' / Int16sl,
                           'crc' / Int8ul),
+
+    MSP_GET_RC_OVERRIDES : Struct('preamble' / Const(MSP_PREAMBLE),
+                                  'direction' / Const(MSP_DIR_FROM_BOARD),
+                                  'size' / Const(1, Int8ul),
+                                  'message_id' / Const(MSP_GET_RC_OVERRIDES, Int8ul),
+                                  'rc_overrides' / Int8ul,
+                                  'crc' / Int8ul),
 
 }
 
