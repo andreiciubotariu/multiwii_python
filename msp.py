@@ -119,7 +119,7 @@ MSP_REQUEST_RESPONSES = {
                             'curr_mission_action' / Int8ul,
                             'curr_mission_number' / Int8ul,
                             'nav_error' / Int8ul,
-                            'target_bearing' / Int16ul,
+                            'target_bearing' / Int16sl,
                             'crc' / Int8ul),
 
     MSP_RAW_GPS : Struct('preamble' / Const(MSP_PREAMBLE),
