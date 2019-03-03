@@ -20,10 +20,13 @@ MSP_GET_RC_OVERRIDES = 53
 
 # Standard commands
 MSP_IDENT = 100
+MSP_SERVO = 103
 MSP_RAW_GPS = 106
 MSP_ALTITUDE = 109
 MSP_GET_WP = 118
+MSP_SERVO_CONF = 120
 MSP_NAV_STATUS = 121
+MSP_RESET_CONF = 208
 MSP_SET_WP = 209
 
 MSP_PREAMBLE = b'$M'
@@ -76,6 +79,11 @@ MSP_SETTINGS_PROVIDERS = {
                                   'size' / Const(1, Int8ul),
                                   'message_id' / Const(MSP_SET_RC_OVERRIDES, Int8ul),
                                   'rc_overrides' / Int8ul),
+
+    MSP_RESET_CONF : Struct('premable' / Const(MSP_PREAMBLE),
+                            'direction' / Const(MSP_DIR_TO_BOARD),
+                            'size' / Const(0, Int8ul),
+                            'message_id' / Const(MSP_RESET_CONF, Int8ul)),
 }
 
 MSP_PARAMETERIZED_REQUESTS = {
@@ -165,6 +173,58 @@ MSP_REQUEST_RESPONSES = {
                                   'message_id' / Const(MSP_GET_RC_OVERRIDES, Int8ul),
                                   'rc_overrides' / Int8ul,
                                   'crc' / Int8ul),
+
+    MSP_SERVO_CONF : Struct('preamble' / Const(MSP_PREAMBLE),
+                            'direction' / Const(MSP_DIR_FROM_BOARD),
+                            'size' / Const(56, Int8ul),
+                            'message_id' / Const(MSP_SERVO_CONF, Int8ul),
+                            'min0' / Int16ul,
+                            'max0' / Int16ul,
+                            'mid0' / Int16ul,
+                            'rate0' / Int8ul,
+                            'min1' / Int16ul,
+                            'max1' / Int16ul,
+                            'mid1' / Int16ul,
+                            'rate1' / Int8ul,
+                            'min2' / Int16ul,
+                            'max2' / Int16ul,
+                            'mid2' / Int16ul,
+                            'rate2' / Int8ul,
+                            'min3' / Int16ul,
+                            'max3' / Int16ul,
+                            'mid3' / Int16ul,
+                            'rate3' / Int8ul,
+                            'min4' / Int16ul,
+                            'max4' / Int16ul,
+                            'mid4' / Int16ul,
+                            'rate4' / Int8ul,
+                            'min5' / Int16ul,
+                            'max5' / Int16ul,
+                            'mid5' / Int16ul,
+                            'rate5' / Int8ul,
+                            'min6' / Int16ul,
+                            'max6' / Int16ul,
+                            'mid6' / Int16ul,
+                            'rate6' / Int8ul,
+                            'min7' / Int16ul,
+                            'max7' / Int16ul,
+                            'mid7' / Int16ul,
+                            'rate7' / Int8ul,
+                            'crc' / Int8ul),
+
+    MSP_SERVO : Struct('preamble' / Const(MSP_PREAMBLE),
+                       'direction' / Const(MSP_DIR_FROM_BOARD),
+                       'size' / Const(16, Int8ul),
+                       'message_id' / Const(MSP_SERVO, Int8ul),
+                       'servo0' / Int16ul,
+                       'servo1' / Int16ul,
+                       'servo2' / Int16ul,
+                       'servo3' / Int16ul,
+                       'servo4' / Int16ul,
+                       'servo5' / Int16ul,
+                       'servo6' / Int16ul,
+                       'servo7' / Int16ul,
+                       'crc' / Int8ul),
 
 }
 
@@ -287,11 +347,34 @@ if __name__ == '__main__':
     #     print(msp.receive_data(msp.get_response(MSP_RAW_GPS)))
     #     counter += 1
 
-    while True:
-        print(counter)
-        print(msp.request(MSP_ALTITUDE))
-        counter += 1
-        time.sleep(1)
+    # while True:
+    #     print(counter)
+    #     print(msp.request(MSP_ALTITUDE))
+    #     counter += 1
+    #     time.sleep(1)
 
+    #print(msp.provide(MSP_RESET_CONF, {}))
+    #time.sleep(10)
+    #print(msp.request(MSP_SERVO))
+
+    while counter < 2:
+        print(counter)
+        print('Drop flotation device (timed)')
+        msp.provide(MSP_SET_RC_OVERRIDES, {'rc_overrides' : (1 << 4)})
+        msp.read_ack(MSP_SET_RC_OVERRIDES)
+        time.sleep(10)
+        print(msp.request(MSP_GET_RC_OVERRIDES), '\n')
+
+        print('Drop floation device (explicit): Open')
+        msp.provide(MSP_SET_RC_OVERRIDES, {'rc_overrides' : (1 << 5)})
+        msp.read_ack(MSP_SET_RC_OVERRIDES)
+        time.sleep(5)
+
+        print('Drop floation device (explicit): Close')
+        msp.provide(MSP_SET_RC_OVERRIDES, {'rc_overrides' : 0})
+        msp.read_ack(MSP_SET_RC_OVERRIDES)
+
+        counter += 1
+        time.sleep(5)
 
     transport.close()
