@@ -356,14 +356,25 @@ if __name__ == '__main__':
     #print(msp.provide(MSP_RESET_CONF, {}))
     #time.sleep(10)
     #print(msp.request(MSP_SERVO))
-    while True:
+
+    while counter < 2:
         print(counter)
-        raw_input('Drop Flotation Device')
-        print(msp.provide(MSP_SET_RC_OVERRIDES, {'rc_overrides' : 16}))
-        time.sleep(4)
-        raw_input('Close')
-        print(msp.provide(MSP_SET_RC_OVERRIDES, {'rc_overrides' : 0}))
+        print('Drop flotation device (timed)')
+        msp.provide(MSP_SET_RC_OVERRIDES, {'rc_overrides' : (1 << 4)})
+        msp.read_ack(MSP_SET_RC_OVERRIDES)
+        time.sleep(10)
+        print(msp.request(MSP_GET_RC_OVERRIDES), '\n')
+
+        print('Drop floation device (explicit): Open')
+        msp.provide(MSP_SET_RC_OVERRIDES, {'rc_overrides' : (1 << 5)})
+        msp.read_ack(MSP_SET_RC_OVERRIDES)
+        time.sleep(5)
+
+        print('Drop floation device (explicit): Close')
+        msp.provide(MSP_SET_RC_OVERRIDES, {'rc_overrides' : 0})
+        msp.read_ack(MSP_SET_RC_OVERRIDES)
+
         counter += 1
-        time.sleep(6)
+        time.sleep(5)
 
     transport.close()
