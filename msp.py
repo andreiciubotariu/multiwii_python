@@ -21,6 +21,8 @@ MSP_GET_RC_OVERRIDES = 53
 # Standard commands
 MSP_IDENT = 100
 MSP_SERVO = 103
+MSP_MOTOR = 104
+MSP_RC = 105
 MSP_RAW_GPS = 106
 MSP_ALTITUDE = 109
 MSP_GET_WP = 118
@@ -225,6 +227,32 @@ MSP_REQUEST_RESPONSES = {
                        'servo6' / Int16ul,
                        'servo7' / Int16ul,
                        'crc' / Int8ul),
+    MSP_MOTOR : Struct('preamble' / Const(MSP_PREAMBLE),
+                       'direction' / Const(MSP_DIR_FROM_BOARD),
+                       'size' / Const(16, Int8ul),
+                       'message_id' / Const(MSP_MOTOR, Int8ul),
+                       'servo0' / Int16ul,
+                       'servo1' / Int16ul,
+                       'servo2' / Int16ul,
+                       'servo3' / Int16ul,
+                       'servo4' / Int16ul,
+                       'servo5' / Int16ul,
+                       'servo6' / Int16ul,
+                       'servo7' / Int16ul,
+                       'crc' / Int8ul),
+    MSP_RC : Struct('preamble' / Const(MSP_PREAMBLE),
+                       'direction' / Const(MSP_DIR_FROM_BOARD),
+                       'size' / Const(16, Int8ul),
+                       'message_id' / Const(MSP_RC, Int8ul),
+                       'ROLL' / Int16ul,
+                       'PITCH' / Int16ul,
+                       'YAW' / Int16ul,
+                       'THROTTLE' / Int16ul,
+                       'AUX1' / Int16ul,
+                       'AUX2' / Int16ul,
+                       'AUX3' / Int16ul,
+                       'AUX4' / Int16ul,
+                       'crc' / Int8ul),
 
 }
 
@@ -316,18 +344,21 @@ if __name__ == '__main__':
 
     stop_gps_updates(msp)
 
-    print(msp.request(MSP_IDENT))
+    # msp.provide(MSP_SET_RC_OVERRIDES, {'rc_overrides' : 0})
+    # msp.read_ack(MSP_SET_RC_OVERRIDES)
 
-    # print(msp.request(MSP_GET_WP, {'wp_no': 0}))
-    # print(msp.request(MSP_GET_WP, {'wp_no': 5}))
+    # msp.provide(MSP_SET_RC_OVERRIDES, {'rc_overrides' : (1 << 1) | (1 << 5)})
+    # msp.read_ack(MSP_SET_RC_OVERRIDES)
+    # time.sleep(5)
 
-    # print('Send waypoint')
+    # print(msp.request(MSP_NAV_STATUS))
+    # print(msp.request(MSP_RAW_GPS))
     # msp.provide(MSP_SET_WP,
     #             {
-    #                 'wp_no'  : 1,
+    #                 'wp_no'  : 255,
     #                 'action' : 1,
-    #                 'lat' : 4,
-    #                 'lon' : 57,
+    #                 'lat' : 5,
+    #                 'lon' : -5,
     #                 'altitude' : 9,
     #                 'param1' : 1,
     #                 'param2' : 5,
@@ -335,46 +366,10 @@ if __name__ == '__main__':
     #                 'flag' : 0,
     #             })
     # msp.read_ack(MSP_SET_WP)
-    # print('Get same waypoint')
-    # print(msp.request(MSP_GET_WP, {'wp_no': 1}))
-    # print(msp.request(MSP_NAV_STATUS))
+    while True:
+        print(msp.request(MSP_NAV_STATUS))
+        time.sleep(1)
 
-    # msp.provide(MSP_GPS_REPORT_INTERVAL, {'gps_report_interval': 1000})
-
-    counter = 0
-    # while True:
-    #     print(counter)
-    #     print(msp.receive_data(msp.get_response(MSP_RAW_GPS)))
-    #     counter += 1
-
-    # while True:
-    #     print(counter)
-    #     print(msp.request(MSP_ALTITUDE))
-    #     counter += 1
-    #     time.sleep(1)
-
-    #print(msp.provide(MSP_RESET_CONF, {}))
-    #time.sleep(10)
-    #print(msp.request(MSP_SERVO))
-
-    while counter < 2:
-        print(counter)
-        print('Drop flotation device (timed)')
-        msp.provide(MSP_SET_RC_OVERRIDES, {'rc_overrides' : (1 << 4)})
-        msp.read_ack(MSP_SET_RC_OVERRIDES)
-        time.sleep(10)
-        print(msp.request(MSP_GET_RC_OVERRIDES), '\n')
-
-        print('Drop floation device (explicit): Open')
-        msp.provide(MSP_SET_RC_OVERRIDES, {'rc_overrides' : (1 << 5)})
-        msp.read_ack(MSP_SET_RC_OVERRIDES)
-        time.sleep(5)
-
-        print('Drop floation device (explicit): Close')
-        msp.provide(MSP_SET_RC_OVERRIDES, {'rc_overrides' : 0})
-        msp.read_ack(MSP_SET_RC_OVERRIDES)
-
-        counter += 1
-        time.sleep(5)
+    print(msp.request(MSP_GET_RC_OVERRIDES))
 
     transport.close()
