@@ -12,11 +12,12 @@ MSP_SERIAL_BAUD = 115200
 MSP_SERIAL_TIMEOUT = 5
 
 # Message IDs (commands)
-# Custom commands
+# Custom commands. The behaviour of these commands is specific to my MultiWii 2.4 fork
 MSP_GPS_REPORT_INTERVAL = 50
 MSP_PERIODIC_GPS_REPORT = 51
 MSP_SET_RC_OVERRIDES = 52
 MSP_GET_RC_OVERRIDES = 53
+MSP_UNSET_RC_OVERRIDES = 54
 
 # Standard commands
 MSP_IDENT = 100
@@ -81,6 +82,12 @@ MSP_SETTINGS_PROVIDERS = {
                                   'size' / Const(1, Int8ul),
                                   'message_id' / Const(MSP_SET_RC_OVERRIDES, Int8ul),
                                   'rc_overrides' / Int8ul),
+
+    MSP_UNSET_RC_OVERRIDES : Struct('preamble' / Const(MSP_PREAMBLE),
+                                    'direction' / Const(MSP_DIR_TO_BOARD),
+                                    'size' / Const(1, Int8ul),
+                                    'message_id' / Const(MSP_UNSET_RC_OVERRIDES, Int8ul),
+                                    'rc_overrides_to_unset' / Int8ul),
 
     MSP_RESET_CONF : Struct('premable' / Const(MSP_PREAMBLE),
                             'direction' / Const(MSP_DIR_TO_BOARD),
